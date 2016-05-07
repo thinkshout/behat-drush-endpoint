@@ -5,6 +5,8 @@
  * Contains Behat Drush command file, for use by the Behat Drush Extension.
  */
 
+use Drupal\Core\Entity\Entity;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
@@ -134,6 +136,24 @@ function drush_behat_op_delete_term(\stdClass $term) {
 }
 
 /**
+ * Create an entity.
+ */
+function drush_behat_op_create_entity($entity_info) {
+  list($entity_type, $entity) = $entity_info;
+  return _drush_behat_op_create_entity($entity_type, $entity);
+}
+
+/**
+ * Delete an entity.
+ */
+function drush_behat_op_delete_entity($entity) {
+  $entity = $entity instanceof EntityInterface ? $entity : entity_load($entity->entity_type, $entity->id);
+  if ($entity instanceof EntityInterface) {
+    $entity->delete();
+  }
+}
+
+/**
  * Check if this is a field.
  */
 function drush_behat_op_is_field($is_field_info) {
@@ -155,6 +175,19 @@ function _drush_behat_get_entity_field_types($entity_type) {
     }
   }
   return $return;
+}
+
+function _drush_behat_op_create_entity($entity_type, $entity) {
+  // Attempt to decipher any fields that may be specified.
+  _drush_behat_expand_entity_fields($entity_type, $entity);
+
+  $stored_entity = entity_create($entity_type, (array) $entity);
+  $stored_entity->save();
+
+  $entity->id = $stored_entity->id();
+  $entity->entity_type = $entity_type;
+
+  return $entity;
 }
 
 function _drush_behat_is_field($entity_type, $field_name) {
