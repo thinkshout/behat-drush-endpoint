@@ -154,6 +154,21 @@ function drush_behat_op_delete_entity($entity) {
 }
 
 /**
+ * Perform an entity query.
+ */
+function drush_behat_op_entity_query($query_info) {
+  list($entity_type, $conditions) = $query_info;
+
+  $query = \Drupal::entityQuery($entity_type);
+
+  foreach ($conditions as $condition) {
+    $query->condition($condition->field, $condition->value, $condition->operator);
+  }
+
+  return $query->execute();
+}
+
+/**
  * Check if this is a field.
  */
 function drush_behat_op_is_field($is_field_info) {
